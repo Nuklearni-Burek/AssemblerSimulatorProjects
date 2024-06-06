@@ -1,0 +1,901 @@
+JMP main
+JMP isr
+black: DW 0xDB00
+beige: DW 0xDBFE
+darkBeige: DW 0xDBF5
+Dyellow: DW 0xDBF8
+yellow: DW 0xDBFC
+brown: DW 0xDBF4
+feather: DW 0xDBCC
+vsync: DW 0
+s: DB "EGG HATCH!"
+DB 0
+s1: DB "Thank you!"
+DB 0
+drawFeather:
+MOV A, D
+OUT 8
+MOV A, [feather]
+OUT 9
+RET
+
+
+drawBlack:
+MOV A, D
+OUT 8
+MOV A, [black]
+OUT 9
+RET
+
+
+drawBeige:
+MOV A, D
+OUT 8
+MOV A, [beige]
+OUT 9
+RET
+
+
+drawDBeige:
+MOV A, D
+OUT 8
+MOV A, [darkBeige]
+OUT 9
+RET
+
+
+drawDyellow:
+MOV A, D
+OUT 8
+MOV A, [Dyellow]
+OUT 9
+RET
+drawYellow:
+MOV A, D
+OUT 8
+MOV A, [yellow]
+OUT 9
+RET
+
+
+drawBrown:
+MOV A, D
+OUT 8
+MOV A, [brown]
+OUT 9
+RET
+
+
+isr:
+PUSH A
+MOV [vsync], 1
+MOV A, 4
+OUT 2
+POP A
+IRET
+
+
+wait_frames:
+MOV A, [vsync]
+CMP A, 0
+JE wait_frames
+MOV [vsync], 0
+DEC C
+CMP C, 0
+JE wait_frames_return
+JMP wait_frames
+wait_frames_return:
+RET
+
+
+
+
+
+
+
+
+main:
+MOV SP, 0x0FFF
+MOV A, 1
+OUT 7
+MOV A, 4
+OUT 0
+STI
+
+
+MOV A, 0xA300
+OUT 8
+MOV A, 248
+OUT 9
+MOV D, 0x0606
+MOV B, s
+text_loop:
+MOV A, D
+OUT 8
+MOVB AH, [B]
+MOVB AL, 0x66
+OUT 9
+INC B
+ADD D, 2
+CMP D, 0x0618
+JBE text_loop
+
+
+
+
+
+
+MOV C, 100
+CALL wait_frames
+MOV D, 0x0606
+text_loop1:
+MOV A, D
+OUT 8
+MOVB AH, 0
+MOVB AL, 0xDF
+OUT 9
+INC B
+ADD D, 2
+CMP D, 0x0618
+JBE text_loop1
+
+
+
+
+MOV A, 0xA300
+OUT 8
+MOV A, 223
+OUT 9
+
+
+MOV C, 20
+CALL wait_frames
+
+
+
+
+;start of drawing
+;BLACK COLOR
+;line 1
+MOV D, 0x030C
+CALL drawBlack
+MOV D, 0x030E
+CALL drawBlack
+MOV D, 0x0310
+CALL drawBlack
+;line 2
+MOV D, 0x040A
+CALL drawBlack
+MOV D, 0x0412
+CALL drawBlack
+;line 3
+MOV D, 0x0508
+CALL drawBlack
+MOV D, 0x0514
+CALL drawBlack
+;line 4
+MOV D, 0x0606
+CALL drawBlack
+MOV D, 0x0616
+CALL drawBlack
+;line 5
+MOV D, 0x0706
+CALL drawBlack
+MOV D, 0x0716
+CALL drawBlack
+;line 6 7 8 9 
+MOV D, 0x0804
+loop100:
+CALL drawBlack
+INCB DH
+CMP D, 0x0B04
+JBE loop100
+
+
+MOV D, 0x0818
+loop101:
+CALL drawBlack
+INCB DH
+CMP D, 0x0B18
+JBE loop101
+;line 10
+MOV D, 0x0C06
+CALL drawBlack
+MOV D, 0x0C16
+CALL drawBlack
+;line 11
+MOV D, 0x0D08
+loop102:
+CALL drawBlack
+ADD D, 2
+CMP D, 0x0D14
+JBE loop102
+
+
+; BEIGE COLOR
+;line 2
+MOV D, 0x040C
+CALL drawBeige
+MOV D, 0x040E
+CALL drawBeige
+;line 3
+MOV D, 0x050A
+loop3:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0510
+JBE loop3
+
+
+;line 4
+MOV D, 0x0608
+loop4:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0610
+JBE loop4
+
+
+;line 5
+MOV D, 0x0708
+loop5:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0710
+JBE loop5
+
+
+;line 6 7 8
+MOV D, 0x0806
+loop6:
+CALL drawBeige
+CMP D, 0x0A10
+JE next
+ADD D, 2
+CMPB DL, 16
+JBE loop6
+ADD D, 244
+JMP loop6
+next:
+; DARK BEIGE
+;line 8
+MOV D, 0x0A06
+CALL drawDBeige
+;line 9
+MOV D, 0x0B06
+loop7:
+CALL drawDBeige
+ADD D, 2
+CMP D, 0x0B16
+JBE loop7
+;line 10
+MOV D, 0x0C08
+loop108:
+CALL drawDBeige
+ADD D, 2
+CMP D, 0x0C14
+JBE loop108
+
+
+;line 2
+MOV D, 0x0410
+CALL drawDBeige
+;line 3
+MOV D, 0x0512
+CALL drawDBeige
+;line 9 vertically
+MOV D, 0x0614
+loop109:
+CALL drawDBeige
+INCB DH
+CMP D, 0x0B14
+JE next1
+JMP loop109
+next1:
+MOV D, 0x0A12
+CALL drawDBeige
+
+
+;line 8 vertically Beige color*
+MOV D, 0x0612
+loop110:
+CALL drawBeige
+INCB DH
+CMP D, 0x0A12
+JB loop110
+
+
+;line 10 vertically
+MOV D, 0x0816
+loop111:
+CALL drawDBeige
+INCB DH
+CMP D, 0x0B16
+JB loop111
+
+
+
+
+; end of drawing 1
+MOV C, 150
+CALL wait_frames
+
+
+; masking
+MOV A, 0x0804
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+
+
+
+
+;start of drawing 2 
+;BLACK COLOR
+;line 1
+MOV D, 0x010C
+CALL drawBlack
+MOV D, 0x010E
+CALL drawBlack
+MOV D, 0x0110
+CALL drawBlack
+;line 2
+MOV D, 0x020A
+CALL drawBlack
+MOV D, 0x0212
+CALL drawBlack
+;line 3
+MOV D, 0x0308
+CALL drawBlack
+MOV D, 0x0314
+CALL drawBlack
+;line 4
+MOV D, 0x0406
+CALL drawBlack
+MOV D, 0x0416
+CALL drawBlack
+;line 5
+MOV D, 0x0504
+CALL drawBlack
+MOV D, 0x0518
+CALL drawBlack
+;line 6
+MOV D, 0x0604
+CALL drawBlack
+MOV D, 0x0618
+CALL drawBlack
+;the bird
+;line 1
+MOV D, 0x0716
+CALL drawBlack
+MOV D, 0x0706
+CALL drawBlack
+
+
+MOV D, 0x0708
+loop12:
+CALL drawDyellow
+ADD D, 2
+CMP D, 0x0716
+JB loop12
+
+
+;line 2
+MOV D, 0x0816
+CALL drawBlack
+MOV D, 0x0806
+CALL drawBlack
+MOV D, 0x0810
+CALL drawBlack
+MOV D, 0x080A
+CALL drawBlack
+MOV D, 0x0814
+CALL drawDyellow
+MOV D, 0x0812
+CALL drawYellow
+MOV D, 0x080E
+CALL drawYellow
+MOV D, 0x080C
+CALL drawYellow
+MOV D, 0x0808
+CALL drawYellow
+; the bird end
+;line 7 8 9 
+MOV D, 0x0904
+loop:
+CALL drawBlack
+INCB DH
+CMP D, 0x0B04
+JBE loop
+
+
+MOV D, 0x0918
+loop1:
+CALL drawBlack
+INCB DH
+CMP D, 0x0B18
+JBE loop1
+;line 10
+MOV D, 0x0C06
+CALL drawBlack
+MOV D, 0x0C16
+CALL drawBlack
+;line 11
+MOV D, 0x0D08
+loop2:
+CALL drawBlack
+ADD D, 2
+CMP D, 0x0D14
+JBE loop2
+
+
+MOV D, 0x020C
+loop13:
+CALL drawBeige
+INCB DH
+CMP D, 0x060C
+JBE loop13
+
+
+MOV D, 0x020E
+loop14:
+CALL drawBeige
+INCB DH
+CMP D, 0x060E
+JBE loop14
+
+
+MOV D, 0x0606
+loop15:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0612
+JBE loop15
+
+
+MOV D, 0x0506
+loop16:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0512
+JBE loop16
+
+
+MOV D, 0x0408
+loop17:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0412
+JBE loop17
+
+
+MOV D, 0x030A
+loop18:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0312
+JBE loop18
+
+
+MOV D, 0x0210
+CALL drawDBeige
+
+
+MOV D, 0x0312
+CALL drawDBeige
+
+
+MOV D, 0x0414
+loop19:
+CALL drawDBeige
+INCB DH
+CMP D, 0x0614
+JBE loop19
+
+
+
+
+MOV D, 0x0516
+CALL drawDBeige
+MOV D, 0x0616
+CALL drawDBeige
+MOV D, 0x0506
+CALL drawDBeige
+
+
+MOV D, 0x0906
+loop20:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0912
+JBE loop20
+
+
+MOV D, 0x0A06
+loop21:
+CALL drawBeige
+ADD D, 2
+CMP D, 0x0A10
+JBE loop21
+
+
+MOV D, 0x0B06
+loop22:
+CALL drawDBeige
+ADD D, 2
+CMP D, 0x0B16
+JBE loop22
+
+
+MOV D, 0x0C08
+loop23:
+CALL drawDBeige
+ADD D, 2
+CMP D, 0x0C14
+JBE loop23
+
+
+MOV D, 0x0A12
+loop24:
+CALL drawDBeige
+ADD D, 2
+CMP D, 0x0A16
+JBE loop24
+
+
+MOV D, 0x0914
+CALL drawDBeige
+
+
+MOV D, 0x0916
+CALL drawDBeige
+
+
+MOV D, 0x0A06
+CALL drawDBeige
+
+
+MOV A, 0x0818
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+
+
+MOV C, 150
+CALL wait_frames
+
+
+
+
+
+
+
+
+
+
+
+
+; BIRD HATCHED
+MOV D, 0x0D0A
+CALL drawBlack
+
+
+MOV D, 0x0D10
+CALL drawBlack
+
+
+MOV D, 0x0D16
+CALL drawBlack
+
+
+MOV D, 0x0C08
+CALL drawBlack
+MOV D, 0x0C18
+CALL drawBlack
+
+
+MOV D, 0x081A
+loop25:
+CALL drawBlack
+INCB DH
+CMP D, 0x0B1A
+JBE loop25
+
+
+MOV D, 0x0818
+CALL drawBlack
+
+
+MOV D, 0x0716
+CALL drawBlack
+MOV D, 0x0616
+CALL drawBlack
+MOV D, 0x0514
+CALL drawBlack
+
+
+MOV D, 0x040A
+loop26:
+CALL drawBlack
+ADD D, 2
+CMP D, 0x0412
+JBE loop26
+
+
+MOV D, 0x0508
+CALL drawBlack
+
+
+MOV D, 0x0606
+loop27:
+CALL drawBlack
+INCB DH
+CMP D, 0x0B06
+JBE loop27
+
+
+MOV D, 0x050A
+loop28:
+CALL drawYellow
+INCB DH
+CMPB DH, 0x0C
+JNE loop28
+CMPB DL, 0x0C
+JE next4       ;; next 4
+MOV D, 0x050C
+JMP loop28
+next4:
+
+
+MOV D, 0x050E
+loop29:
+CALL drawYellow
+INCB DH
+CMP D, 0x0B0E
+JBE loop29
+
+
+MOV D, 0x0510
+loop30:
+CALL drawYellow
+INCB DH
+CMP D, 0x0B10
+JBE loop30
+
+
+MOV D, 0x0512
+loop31:
+CALL drawYellow
+INCB DH
+CMP D, 0x0A12
+JBE loop31
+
+
+MOV D, 0x0614
+loop32:
+CALL drawYellow
+INCB DH
+CMP D, 0x0A14
+JBE loop32
+
+
+MOV D, 0x070A
+CALL drawBlack
+ 
+MOV D, 0x0608
+loop33:
+CALL drawYellow
+INCB DH
+CMP D, 0x0B08
+JBE loop33
+
+
+MOV D, 0x0710
+CALL drawBlack
+
+
+MOV D, 0x080A
+CALL drawBrown
+MOV D, 0x080C
+CALL drawBrown
+
+
+MOV D, 0x0B12
+CALL drawFeather
+MOV D, 0x0B14
+CALL drawFeather
+MOV D, 0x0A16
+CALL drawFeather
+MOV D, 0x0916
+CALL drawDyellow
+MOV D, 0x0816
+CALL drawDyellow
+
+
+MOV D, 0x0918
+loop34:
+CALL drawDyellow
+INCB DH
+CMP D, 0x0B18
+JBE loop34
+
+
+MOV D, 0x0C0A
+loop35:
+CALL drawDyellow
+ADD D, 2
+CMP D, 0x0C16
+JBE loop35
+
+
+MOV D, 0x0B16
+CALL drawDyellow
+
+
+MOV D, 0x0D0C
+CALL drawFeather
+MOV D, 0x0D0E
+CALL drawFeather
+MOV D, 0x0D12
+CALL drawFeather
+MOV D, 0x0D14
+CALL drawFeather
+
+
+
+
+
+
+;masking of hatched bird
+MOV D, 0x0504
+loopMask1:
+MOV A, D
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+INCB DH
+CMP D, 0x0B04
+JBE loopMask1
+
+
+MOV D, 0x0100
+loopMask2:
+MOV A, D
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+ADD D,2
+CMP D, 0x0116
+JBE loopMask2
+
+
+MOV D, 0x0200
+loopMask3:
+MOV A, D
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+ADD D,2
+CMP D, 0x0216
+JBE loopMask3
+
+
+MOV D, 0x0300
+loopMask4:
+MOV A, D
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+ADD D,2
+CMP D, 0x0316
+JBE loopMask4
+
+
+MOV A, 0x0406
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0408
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0506
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0416
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0414
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0516
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0518
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0618
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0C06
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+MOV A, 0x0D08
+OUT 8
+MOV A, 0xDBDF
+OUT 9
+
+
+
+
+MOV B, s1
+MOV D, 0x0624
+text_loop3:
+MOV A, D
+OUT 8
+MOVB AH, [B]
+MOVB AL, 0xCC
+OUT 9
+INC B
+ADD D, 2
+CMP D, 0x0636
+JBE text_loop3
+
+
+
+
+;END of hatched bird
+MOV C, 150
+CALL wait_frames
+
+
+
+
+MOV D, 10
+loopAnimation:
+MOV A, 0xA302
+OUT 8
+MOV A, D
+OUT 9
+ADD D, 10
+MOV C, 3
+CALL wait_frames
+CMP D, 250
+JNE loopAnimation
+
+
+
+
+
+
+CLI
+HLT
