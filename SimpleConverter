@@ -1,0 +1,293 @@
+JMP main
+JMP isr
+vsync: DW 0
+question: DB "BINARY"
+DB 0
+question2: DB "TO"
+DB 0
+question3: DB "HEXADECIMAL!"
+DB 0
+text2: DB "Enter an 8 bit"
+DB 0
+text3: DB "number."
+DB 0
+text4: DB "Your number is"
+DB 0
+firstNumber: DW 0
+secondNumber: DW 0
+
+isr:
+PUSH A
+MOV [vsync], 1
+MOV A, 4
+OUT 2
+POP A
+IRET
+
+wait_frames:
+MOV A, [vsync]
+CMP A, 0
+JE wait_frames
+MOV [vsync], 0
+DEC C
+CMP C, 0
+JE wait_frames_return
+JMP wait_frames
+wait_frames_return:
+RET
+
+main:
+MOV SP, 0x0FFF
+MOV A, 1
+OUT 7
+MOV A, 4
+OUT 0
+STI
+MOV A, 0xA300 ;adresa za pozadinu
+OUT 8
+MOV A, 6 ;boja pozadine
+OUT 9
+
+
+MOV C, question  ;prvi char stringa
+MOV D, 0x050A ;screen cell
+writeText:
+MOV A, D
+OUT 8
+MOVB AH , [C] ; Get a character .
+CMPB AH , 0 ; The end of the string ?
+JE exit ; If yes , terminate .
+MOVB AL , 252 ; Set it ’s color to yellow .
+OUT 9 ; Display the character .
+INC C ; Next character .
+ADD D, 2 ; Next screen cell .
+JMP writeText
+exit:
+
+MOV C, question2  ;prvi char stringa
+MOV D, 0x070E ;screen cell
+writeText2:
+MOV A, D
+OUT 8
+MOVB AH , [C] ; Get a character .
+CMPB AH , 0 ; The end of the string ?
+JE exit1 ; If yes , terminate .
+MOVB AL , 252 ; Set it ’s color to yellow .
+OUT 9 ; Display the character .
+INC C ; Next character .
+ADD D, 2 ; Next screen cell .
+JMP writeText2
+exit1:
+
+MOV C, question3  ;prvi char stringa
+MOV D, 0x0904 ;screen cell
+writeText3:
+MOV A, D
+OUT 8
+MOVB AH , [C] ; Get a character .
+CMPB AH , 0 ; The end of the string ?
+JE exit2 ; If yes , terminate .
+MOVB AL , 252 ; Set it ’s color to yellow .
+OUT 9 ; Display the character .
+INC C ; Next character .
+ADD D, 2 ; Next screen cell .
+JMP writeText3
+exit2:
+
+MOV C, 200    
+CALL wait_frames
+
+MOV D, 0x050A
+clearScreen:
+MOV A, D
+OUT 8
+MOVB AH , 0 ; Get a character .
+CMP D , 0x0516 ; The end of the string ?
+JE exit3 ; If yes , terminate .
+OUT 9
+ADD D, 2 ; Next screen cell .
+JMP clearScreen
+exit3:
+
+MOV D, 0x0706
+clearScreen1:
+MOV A, D
+OUT 8
+MOVB AH , 0 ; Get a character .
+CMP D , 0x071A ; The end of the string ?
+JE exit4 ; If yes , terminate .
+OUT 9 ; Display the character .
+ADD D, 2 ; Next screen cell .
+JMP clearScreen1
+exit4:
+
+MOV D, 0x0904
+clearScreen2:
+MOV A, D
+OUT 8
+MOVB AH , 0 ; Get a character .
+CMP D , 0x091C ; The end of the string ?
+JE exit5 ; If yes , terminate .
+OUT 9 ; Display the character .
+ADD D, 2 ; Next screen cell .
+JMP clearScreen2
+exit5:
+
+;Text about entering 8bit binary number
+
+MOV C, text2  ;prvi char stringa
+MOV D, 0x0502 ;screen cell
+writeText4:
+MOV A, D
+OUT 8
+MOVB AH , [C] ; Get a character .
+CMPB AH , 0 ; The end of the string ?
+JE exit6 ; If yes , terminate .
+MOVB AL , 255 ; Set it ’s color to yellow .
+OUT 9 ; Display the character .
+INC C ; Next character .
+ADD D, 2 ; Next screen cell .
+JMP writeText4
+exit6:
+
+MOV C, text3  ;prvi char stringa
+MOV D, 0x060A ;screen cell
+writeText5:
+MOV A, D
+OUT 8
+MOVB AH , [C] ; Get a character .
+CMPB AH , 0 ; The end of the string ?
+JE exit7 ; If yes , terminate .
+MOVB AL , 255 ; Set it ’s color to yellow .
+OUT 9 ; Display the character .
+INC C ; Next character .
+ADD D, 2 ; Next screen cell .
+JMP writeText5
+exit7:
+
+; TAKES TEXT INPUT
+MOV D, 0x1000
+firstLine:
+IN 5
+AND A,2
+CMP A, 2
+JNE firstLine
+IN 6
+CMP D, 0x1008
+JE continue
+MOVB [D], AL
+INC D
+JMP firstLine
+
+continue:
+
+
+MOVB BL, [0x1003]
+SUB B, 0x0030
+MOV A, B
+MOVB BL, [0x1002]
+SUB B, 0x0030
+SHL B, 1
+ADD A, B
+MOVB BL, [0x1001]
+SUB B, 0x0030
+SHL B, 2
+ADD A, B
+MOVB BL, [0x1000]
+SUB B, 0x0030
+SHL B, 3
+ADD A, B
+
+CMP A, 9
+JA cont
+ADD A, 0x0030
+MOVB [firstNumber], AL
+JMP cont2
+cont:
+ADD A, 0x0037
+MOVB [firstNumber], AL
+cont2:
+
+MOVB BL, [0x1007]
+SUB B, 0x0030
+MOV A, B
+MOVB BL, [0x1006]
+SUB B, 0x0030
+SHL B, 1
+ADD A, B
+MOVB BL, [0x1005]
+SUB B, 0x0030
+SHL B, 2
+ADD A, B
+MOVB BL, [0x1004]
+SUB B, 0x0030
+SHL B, 3
+ADD A, B
+
+CMP A, 9 ;is it smaller than 10
+JA cont3
+ADD A, 0x0030 ;transform it into character from 0-9
+MOVB [secondNumber], AL
+JMP cont4
+cont3: ;otherwise
+ADD A, 0x0037   ;transform it into character A-F
+MOVB [secondNumber], AL
+cont4:
+
+MOV D, 0x0502
+clearScreen10:
+MOV A, D
+OUT 8
+MOVB AH , 0 ; Get a character .
+CMP D , 0x051E ; The end of the string ?
+JE exit10 ; If yes , terminate .
+OUT 9
+ADD D, 2 ; Next screen cell .
+JMP clearScreen10
+exit10:
+
+MOV D, 0x0606
+clearScreen11:
+MOV A, D
+OUT 8
+MOVB AH , 0 ; Get a character .
+CMP D , 0x061C ; The end of the string ?
+JE exit11 ; If yes , terminate .
+OUT 9
+ADD D, 2 ; Next screen cell .
+JMP clearScreen11
+exit11:
+
+MOV C, text4  ;prvi char stringa
+MOV D, 0x0602 ;screen cell
+writeText10:
+MOV A, D
+OUT 8
+MOVB AH , [C] ; Get a character .
+CMPB AH , 0 ; The end of the string ?
+JE exit12 ; If yes , terminate .
+MOVB AL , 25 ; Set it ’s color to yellow .
+OUT 9 ; Display the character .
+INC C ; Next character .
+ADD D, 2 ; Next screen cell .
+JMP writeText10
+exit12:
+
+MOV A, 0xA300 ;adresa za pozadinu
+OUT 8
+MOV A, 254 ;boja pozadine
+OUT 9
+
+MOV A, 0x080E
+OUT 8
+MOVB AH, [firstNumber]
+MOVB AL, 54
+OUT 9
+
+MOV A, 0x0810
+OUT 8
+MOVB AH, [secondNumber]
+MOVB AL, 54
+OUT 9
+
+HLT
